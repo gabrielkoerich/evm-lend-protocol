@@ -1,0 +1,35 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/hardhat-nodejs
+          key: solc-${{ runner.os }}-${{ hashFiles('hardhat.config.ts') }}
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run build
+
+      - run: bun run test:sol
